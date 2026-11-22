@@ -1,0 +1,23 @@
+name: build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      # The JavaFX tests (table, window, About, splash) start the toolkit, which needs a display and GTK.
+      - run: sudo apt-get update && sudo apt-get install -y xvfb libgtk-3-0t64
+      - run: xvfb-run -a mvn -B verify
