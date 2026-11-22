@@ -100,6 +100,9 @@ Excel can misread non-English names in a UTF-8 CSV opened by double-click.
 Data > From Text/CSV reads them correctly; Numbers, LibreOffice and Google
 Sheets read them as they are.
 
+Double-click a row on the Companies or People tab to see that record on its
+own, in a dialog listing every field. The values can be selected and copied.
+
 Click a column header to sort by it, again to reverse it, and shift-click to
 add another sort key. Names and people open sorted by last name, and
 companies by name.

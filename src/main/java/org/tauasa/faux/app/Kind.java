@@ -21,6 +21,11 @@ public enum Kind {
         return title;
     }
 
+    /** "Name", "Company", "Person": one of these, for a dialog title. */
+    public String singularTitle() {
+        return Character.toUpperCase(singular.charAt(0)) + singular.substring(1);
+    }
+
     /** "1 name", "2 names". */
     public String count(int n) {
         return n + " " + (n == 1 ? singular : plural);

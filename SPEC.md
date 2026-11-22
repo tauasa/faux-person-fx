@@ -63,6 +63,7 @@ Spring owns the objects. JavaFX owns the window.
 | `Appearance` | Light, Dark or System, and whether each shows dark given the OS's setting. Dark is `dark.css`, a stylesheet over Modena's light theme that recolors the colors Modena derives the rest from |
 | `SystemTheme` | `@Component` that asks the OS whether it's set to dark, since JavaFX 21 can't: `defaults read -g AppleInterfaceStyle` on macOS, `AppsUseLightTheme` in the registry on Windows, GNOME's `color-scheme` or GTK theme on Linux. Anything it can't read is light. Remembers its last answer; asked once behind the splash |
 | `AppearanceFile` | Keeps the Appearance choice as one word in `appearance-file`. Missing or unreadable means System. Also read by the splash, before Spring, from `-Dfaux.fx.appearance-file` or the default |
+| `RecordDialog` | One row in a modal dialog owned by the window: a heading (the person's full name or the company's name), then every column's title and value, top to bottom, the values in read-only text boxes that can be selected and copied |
 | `MainView` | `@Component` that builds the window, menus included, when `show(stage, openLink)` runs, not when the bean is created, so the Spring context starts without building it |
 | `About` | `@Component` with the app's and faux-person's versions, which Maven writes into `application.properties` at build time |
 | `AboutDialog` | Builds Help > About: a modal dialog with the project, its license, the licenses of what it's built with, the credit faux-person's data needs, and a link to the GitHub project |
@@ -118,6 +119,11 @@ Spring owns the objects. JavaFX owns the window.
 - The status bar says how many rows the selected tab holds and the seed that
   made them.
 - Rows can be selected several at a time.
+- **Double-clicking a row on the Companies or People tab** opens it in a
+  `RecordDialog`, titled `Person: Jane Doe` or `Company: Costco [faux]`.
+  Names have two fields, both in the table, so double-clicking one does
+  nothing. Neither does a single click, another button, or the empty space
+  below the rows.
 
 ### Menus
 
@@ -236,6 +242,14 @@ run headless.
 | Saving replaces the file with no temp file left, and a file that can't be written doesn't throw | A crash corrupts the history, or a bad path breaks Generate |
 | A second window on the same file opens with each tab's seeds and last seed | History isn't carried to the next session |
 | `history-file` expands `~/`, and blank turns it off | The history lands in the wrong place, or can't be turned off |
+| Help holds Appearance (Light, Dark, System) above About, with System checked to start | The choice can't be found |
+| Light and Dark switch the window's stylesheet and the checked item; System follows the OS, asking again when chosen; Light ignores a dark OS | The window shows the wrong appearance |
+| About opened from a dark window is dark | Dialogs ignore the appearance |
+| The choice is saved and the next window opens in it; a missing or unreadable file means System | The choice isn't remembered |
+| The splash opens in the saved appearance | The splash flashes light before a dark app |
+| The OS check reads each system's setting, treats a failed or missing command as light, and asks once until told to ask again | System guesses wrong, or hangs on a missing command |
+| Double-clicking a person or company row opens one modal dialog, owned by the window, with every column's value, read-only | The record can't be seen on its own, or shows wrong or editable values |
+| Double-clicking a name, or single-clicking any row, opens nothing | Dialogs open by accident |
 | The Spring context starts without building the window | Startup builds controls before the FX toolkit is up |
 
 ## 5. Running
