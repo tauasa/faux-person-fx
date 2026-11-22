@@ -42,9 +42,17 @@ public class SplashPreloader extends Preloader {
         root.setPadding(new Insets(24, 28, 24, 28));
         root.setStyle("-fx-border-color: derive(-fx-base, -25%); -fx-border-width: 1;");
 
+        Scene scene = new Scene(root);
+        // Match the appearance the app will open in, so it doesn't flash light then dark.
+        Appearance appearance = AppearanceFile.forSplash();
+        boolean dark = appearance == Appearance.SYSTEM ? new SystemTheme().isDark() : appearance == Appearance.DARK;
+        if (dark) {
+            scene.getStylesheets().add(Appearance.DARK_STYLESHEET);
+        }
+
         stage.initStyle(StageStyle.UNDECORATED);
         stage.setTitle(About.NAME);
-        stage.setScene(new Scene(root));
+        stage.setScene(scene);
         stage.centerOnScreen();
         stage.show();
     }

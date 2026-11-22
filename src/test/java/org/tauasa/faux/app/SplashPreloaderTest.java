@@ -44,6 +44,33 @@ class SplashPreloaderTest {
     }
 
     @Test
+    void theSplashOpensInTheSavedAppearance(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir)
+            throws Exception {
+        java.nio.file.Path file = dir.resolve("appearance.txt");
+        java.nio.file.Files.writeString(file, "DARK\n");
+        String before = System.getProperty("faux.fx.appearance-file");
+        System.setProperty("faux.fx.appearance-file", file.toString());
+        try {
+            SplashPreloader dark = new SplashPreloader();
+            Fx.run(() -> dark.start(new Stage()));
+            assertTrue(Fx.call(() -> dark.stage().getScene().getStylesheets().contains(Appearance.DARK_STYLESHEET)));
+            Fx.run(() -> dark.stage().hide());
+
+            java.nio.file.Files.writeString(file, "LIGHT\n");
+            SplashPreloader light = new SplashPreloader();
+            Fx.run(() -> light.start(new Stage()));
+            assertFalse(Fx.call(() -> light.stage().getScene().getStylesheets().contains(Appearance.DARK_STYLESHEET)));
+            Fx.run(() -> light.stage().hide());
+        } finally {
+            if (before == null) {
+                System.clearProperty("faux.fx.appearance-file");
+            } else {
+                System.setProperty("faux.fx.appearance-file", before);
+            }
+        }
+    }
+
+    @Test
     void aFailedStartClosesTheSplash() throws Exception {
         SplashPreloader splash = new SplashPreloader();
         Fx.run(() -> splash.start(new Stage()));

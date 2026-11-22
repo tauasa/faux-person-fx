@@ -76,6 +76,7 @@ Cmd on macOS and Ctrl elsewhere.
 | Edit | Select All (Shortcut+A) | Selects every row in the tab, or all the text in a text box |
 | Edit | Clear Tab | Same as the Clear button |
 | View | Names, Companies, People (Shortcut+1, 2, 3) | Switches tab |
+| Help | Appearance > Light, Dark, System | Switches the look of the whole app, dialogs included. System follows your operating system's light or dark setting, and checks it again when the window comes back to the front. The choice is remembered |
 | Help | About faux-person-fx | The version, the license, the licenses of what it's built with, and links to the GitHub project and tauasa.org |
 
 On macOS the screen's menu bar shows JavaFX's own application menu, named
@@ -112,6 +113,7 @@ setting a property, such as `--faux.fx.max-count=50000` on the command line:
 |---|---|---|
 | `faux.fx.default-count` | 100 | The count the window opens with |
 | `faux.fx.max-count` | 10000 | The most rows one Generate may make |
+| `faux.fx.appearance-file` | `~/.faux-person-fx/appearance.txt` | Where the Appearance choice is remembered. Empty starts in System every time. The splash screen shows before settings are read, so to move this file for the splash too, pass it as `-Dfaux.fx.appearance-file=...` in `FAUX_FX_JAVA_OPTS` |
 | `faux.fx.history-file` | `~/.faux-person-fx/seed-history.txt` | Where each tab's seed history is kept between sessions. `~/` is your home folder. Set it empty (`--faux.fx.history-file=`) to keep no history on disk |
 
 The history file is plain text, one run per line: the tab, seed, count,

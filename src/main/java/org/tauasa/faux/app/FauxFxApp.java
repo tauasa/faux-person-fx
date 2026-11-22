@@ -28,6 +28,9 @@ public class FauxFxApp extends Application {
         // faux-person reads its data files on first use. Doing it here keeps
         // the first Generate quick, and the splash shows the wait.
         context.getBean(FauxService.class).warmUp();
+        // Ask the system for light or dark now, so the window opens in it
+        // without running a command on the FX thread.
+        context.getBean(SystemTheme.class).isDark();
         notifyPreloader(new Splash.Progress(0.9, "Building the window\u2026"));
     }
 

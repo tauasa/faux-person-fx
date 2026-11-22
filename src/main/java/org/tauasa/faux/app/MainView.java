@@ -74,6 +74,10 @@ public class MainView {
     private final FauxFxProperties properties;
     private final About about;
     private final SeedHistoryFile historyFile;
+    private final AppearanceFile appearanceFile;
+    private final SystemTheme systemTheme;
+    private Appearance appearance = Appearance.SYSTEM;
+    private final ToggleGroup appearanceGroup = new ToggleGroup();
 
     private final Map<Kind, Sheet<?>> sheets = new EnumMap<>(Kind.class);
     private TabPane tabs;
@@ -93,11 +97,13 @@ public class MainView {
     private MenuItem selectAll;
     private final ToggleGroup viewGroup = new ToggleGroup();
 
-    public MainView(FauxService service, FauxFxProperties properties, About about) {
+    public MainView(FauxService service, FauxFxProperties properties, About about, SystemTheme systemTheme) {
         this.service = service;
         this.properties = properties;
         this.about = about;
+        this.systemTheme = systemTheme;
         this.historyFile = properties.historyPath().map(SeedHistoryFile::new).orElse(null);
+        this.appearanceFile = properties.appearancePath().map(AppearanceFile::new).orElse(null);
     }
 
     /**
@@ -114,6 +120,9 @@ public class MainView {
         sheets.put(Kind.PEOPLE, new Sheet<>(Kind.PEOPLE, Columns.people(LocalDate.now()), service::people));
         if (historyFile != null) {
             historyFile.load().forEach((kind, runs) -> sheets.get(kind).history.restore(runs));
+        }
+        if (appearanceFile != null) {
+            appearance = appearanceFile.load();
         }
 
         tabs = new TabPane();
@@ -144,12 +153,19 @@ public class MainView {
         Scene scene = new Scene(root, 1100, 700);
         // Edit > Copy and Select All follow whether a text box has focus.
         scene.focusOwnerProperty().addListener((obs, was, now) -> refreshEditMenu());
+        stage.setScene(scene);
+        showDark(appearance.isDark(systemTheme.lastKnownIsDark()));
+        // In System, pick up a change made in the OS while the app was in the background.
+        stage.focusedProperty().addListener((obs, was, focused) -> {
+            if (focused && appearance == Appearance.SYSTEM) {
+                followSystem();
+            }
+        });
         // Style and lay out before showing, so the window opens whole rather
         // than painting blank and then filling in.
         root.applyCss();
         root.layout();
         stage.setTitle(About.NAME);
-        stage.setScene(scene);
         stage.centerOnScreen();
         stage.show();
     }
@@ -302,8 +318,19 @@ public class MainView {
             view.getItems().add(show);
         }
 
+        Menu appearanceMenu = new Menu("Appearance");
+        appearanceMenu.setId("menuAppearance");
+        for (Appearance choice : Appearance.values()) {
+            RadioMenuItem option = new RadioMenuItem(choice.label());
+            option.setId("menuAppearance" + choice.label());
+            option.setToggleGroup(appearanceGroup);
+            option.setUserData(choice);
+            option.setSelected(choice == appearance);
+            option.setOnAction(e -> setAppearance(choice));
+            appearanceMenu.getItems().add(option);
+        }
         MenuItem aboutItem = item("menuAbout", "About " + About.NAME, null, e -> showAbout());
-        Menu help = new Menu("Help", null, aboutItem);
+        Menu help = new Menu("Help", null, appearanceMenu, new SeparatorMenuItem(), aboutItem);
 
         MenuBar bar = new MenuBar(file, edit, view, help);
         bar.setId("menuBar");
@@ -414,6 +441,53 @@ public class MainView {
         status.setText("Saved " + sheet.kind.count(sheet.table.size()) + " to " + target.file().getFileName()
                 + " as " + target.format().description());
         return target.file();
+    }
+
+    /** Help > Appearance: switches now and remembers the choice for the next session. */
+    void setAppearance(Appearance choice) {
+        appearance = choice;
+        appearanceGroup.getToggles().forEach(t -> t.setSelected(t.getUserData() == choice));
+        if (appearanceFile != null) {
+            appearanceFile.save(choice);
+        }
+        showDark(choice.isDark(systemTheme.lastKnownIsDark()));
+        if (choice == Appearance.SYSTEM) {
+            followSystem();
+        }
+    }
+
+    /** The current choice. */
+    Appearance appearance() {
+        return appearance;
+    }
+
+    /** Asks the system for light or dark off the FX thread, then shows it if still in System. */
+    private void followSystem() {
+        Thread ask = new Thread(() -> {
+            boolean dark = systemTheme.isDark();
+            Platform.runLater(() -> {
+                if (appearance == Appearance.SYSTEM) {
+                    showDark(dark);
+                }
+            });
+        }, "faux-system-theme");
+        ask.setDaemon(true);
+        ask.start();
+    }
+
+    /** Dialogs and popups copy the window's stylesheets, so they follow it. */
+    private void showDark(boolean dark) {
+        List<String> styles = stage.getScene().getStylesheets();
+        if (dark && !styles.contains(Appearance.DARK_STYLESHEET)) {
+            styles.add(Appearance.DARK_STYLESHEET);
+        } else if (!dark) {
+            styles.remove(Appearance.DARK_STYLESHEET);
+        }
+    }
+
+    /** Whether the window shows dark now. */
+    boolean showsDark() {
+        return stage.getScene().getStylesheets().contains(Appearance.DARK_STYLESHEET);
     }
 
     private void showAbout() {
