@@ -11,7 +11,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 
-/** Help > About: the project, its license, the licenses it carries, and a link to its repo. */
+/** Help > About: the project, its license, the licenses it carries, and links to its repo and the author's site. */
 final class AboutDialog {
 
     private AboutDialog() {
@@ -44,6 +44,10 @@ final class AboutDialog {
         link.setId("aboutLink");
         link.setOnAction(e -> openLink.accept(About.PROJECT_URL));
 
+        Hyperlink website = new Hyperlink(About.WEBSITE_URL);
+        website.setId("aboutWebsite");
+        website.setOnAction(e -> openLink.accept(About.WEBSITE_URL));
+
         Label license = wrapped("MIT License. " + About.COPYRIGHT + ".");
         license.setId("aboutLicense");
         license.setStyle("-fx-font-weight: bold;");
@@ -62,7 +66,7 @@ final class AboutDialog {
                 + "Shapefiles 2024, a work of the US Government not subject to copyright in the United States.");
         data.setId("aboutData");
 
-        VBox content = new VBox(8, name, version, description, link, license, builtWith, data);
+        VBox content = new VBox(8, name, version, description, link, website, license, builtWith, data);
         content.setPadding(new Insets(16));
         content.setPrefWidth(480);
 

@@ -161,6 +161,7 @@ A modal dialog, owned by the window, showing:
 - the name, `faux-person-fx`, and its version
 - what it does, in one line
 - a link to https://github.com/tauasa/faux-person-fx, opened in the browser
+- below it, a link to the author's website, https://tauasa.org
 - `MIT License. Copyright (c) 2026 Tauasa Timoteo.`
 - what it's built with, as the jar carries them: faux-person (MIT); JavaFX
   (GPL v2 with the Classpath Exception); Spring Boot, Spring Framework,
