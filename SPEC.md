@@ -60,6 +60,9 @@ Spring owns the objects. JavaFX owns the window.
 | `ResultsTable<T>` | Builds a JavaFX `TableView<T>` from a list of columns: a `SortedList` bound to the table's comparator, the default sort column set ascending |
 | `SeedHistory` | One tab's runs, most recent first: each run's seed, count, region and real-companies switch, one entry per seed, at most 20. Plain Java |
 | `SeedHistoryFile` | Reads and writes every tab's `SeedHistory` as text, `tab,seed,count,region,realCompanies` per line, newest first. Skips lines it can't read; writes beside the file and moves it over, so a crash leaves the old file; logs a failure to read or write and carries on |
+| `Appearance` | Light, Dark or System, and whether each shows dark given the OS's setting. Dark is `dark.css`, a stylesheet over Modena's light theme that recolors the colors Modena derives the rest from |
+| `SystemTheme` | `@Component` that asks the OS whether it's set to dark, since JavaFX 21 can't: `defaults read -g AppleInterfaceStyle` on macOS, `AppsUseLightTheme` in the registry on Windows, GNOME's `color-scheme` or GTK theme on Linux. Anything it can't read is light. Remembers its last answer; asked once behind the splash |
+| `AppearanceFile` | Keeps the Appearance choice as one word in `appearance-file`. Missing or unreadable means System. Also read by the splash, before Spring, from `-Dfaux.fx.appearance-file` or the default |
 | `MainView` | `@Component` that builds the window, menus included, when `show(stage, openLink)` runs, not when the bean is created, so the Spring context starts without building it |
 | `About` | `@Component` with the app's and faux-person's versions, which Maven writes into `application.properties` at build time |
 | `AboutDialog` | Builds Help > About: a modal dialog with the project, its license, the licenses of what it's built with, the credit faux-person's data needs, and a link to the GitHub project |
@@ -127,6 +130,7 @@ Spring owns the objects. JavaFX owns the window.
 | Edit | Select All | Shortcut+A | Every row of the tab, or a focused text box's text |
 | Edit | Clear Tab | | As the Clear button, and disabled when it is |
 | View | Names, Companies, People | Shortcut+1, 2, 3 | Selects that tab. The checked item follows the selected tab |
+| Help | Appearance > Light, Dark, System | | Switches the stylesheet now and saves the choice. The checked item is the current choice. System asks the OS off the FX thread, again each time the window regains focus |
 | Help | About faux-person-fx | | The About dialog |
 
 Shortcut is Cmd on macOS and Ctrl elsewhere. The menu bar is in the window
@@ -146,6 +150,13 @@ saved where, or why it couldn't be.
 | CSV | RFC 4180: a header of column titles, CRLF line ends, a field quoted when it holds a comma, a quote, CR or LF, with quotes doubled |
 | Pipe | As CSV with `\|` for the comma, and LF line ends |
 | JSON | An array of objects, one per row, two-space indent. Keys are the column titles in camelCase. Integers are numbers, dates ISO-8601 strings, everything else strings |
+
+### Appearance
+
+Help > Appearance holds Light, Dark and System, with System the default. The
+window opens in the saved choice. Dialogs and popups copy the window's
+stylesheets, so they follow it. The splash reads the saved choice too, so a
+dark app doesn't open with a light splash.
 
 ### Splash screen
 

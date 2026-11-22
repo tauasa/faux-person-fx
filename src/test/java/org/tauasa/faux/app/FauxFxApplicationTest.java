@@ -38,5 +38,7 @@ class FauxFxApplicationTest {
         assertEquals(10000, service.maxCount());
         assertEquals(java.nio.file.Path.of(System.getProperty("user.home"), ".faux-person-fx", "seed-history.txt"),
                 properties.historyPath().orElseThrow());
+        assertEquals(java.nio.file.Path.of(System.getProperty("user.home"), ".faux-person-fx", "appearance.txt"),
+                properties.appearancePath().orElseThrow());
     }
 }

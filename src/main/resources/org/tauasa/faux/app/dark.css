@@ -1,0 +1,39 @@
+/*
+ * Dark appearance: recolors JavaFX's Modena theme through the colors it
+ * derives everything else from, so every control follows, text included.
+ */
+.root {
+    -fx-base: #3a3d40;
+    -fx-background: #26282a;
+    -fx-control-inner-background: #2e3134;
+    -fx-control-inner-background-alt: #33373a;
+    -fx-accent: #3d7cc9;
+    -fx-default-button: #2f5f99;
+    -fx-focus-color: #5b9be0;
+    -fx-faint-focus-color: #5b9be022;
+    -fx-selection-bar-non-focused: #44505c;
+    -fx-light-text-color: #ffffff;
+}
+
+.hyperlink {
+    -fx-text-fill: #7ab4ee;
+}
+
+.hyperlink:visited {
+    -fx-text-fill: #b39ddb;
+}
+
+.text-input {
+    -fx-prompt-text-fill: #8f9499;
+}
+
+.table-view .column-header-background,
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: #34373a;
+}
+
+.tooltip {
+    -fx-background-color: #45494d;
+    -fx-text-fill: #ececec;
+}

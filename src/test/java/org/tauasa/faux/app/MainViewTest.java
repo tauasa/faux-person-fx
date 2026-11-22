@@ -32,6 +32,10 @@ class MainViewTest {
     private Stage stage;
     private Scene scene;
     private MainView view;
+    /** The OS's light or dark setting, as the app's System mode sees it. */
+    private final java.util.concurrent.atomic.AtomicBoolean osDark = new java.util.concurrent.atomic.AtomicBoolean();
+    private final SystemTheme systemTheme = new SystemTheme(
+            cmd -> osDark.get() ? java.util.Optional.of("Dark\n") : java.util.Optional.empty(), "Mac OS X");
     private final java.util.List<String> opened = new java.util.concurrent.CopyOnWriteArrayList<>();
 
     @BeforeAll
@@ -42,7 +46,7 @@ class MainViewTest {
     @BeforeEach
     void openWindow() throws Exception {
         FauxFxProperties properties = new FauxFxProperties(100, 1000);
-        view = new MainView(new FauxService(properties), properties, new About("1.2.3", "0.2.0"));
+        view = new MainView(new FauxService(properties), properties, new About("1.2.3", "0.2.0"), systemTheme);
         stage = Fx.call(() -> {
             Stage s = new Stage();
             view.show(s, opened::add);
@@ -402,8 +406,12 @@ class MainViewTest {
     }
 
     private static Stage openWith(String historyFile) throws Exception {
-        FauxFxProperties properties = new FauxFxProperties(100, 1000, historyFile);
-        MainView other = new MainView(new FauxService(properties), properties, new About("1.2.3", "0.2.0"));
+        return openWith(new FauxFxProperties(100, 1000, historyFile));
+    }
+
+    private static Stage openWith(FauxFxProperties properties) throws Exception {
+        MainView other = new MainView(new FauxService(properties), properties, new About("1.2.3", "0.2.0"),
+                new SystemTheme(cmd -> java.util.Optional.empty(), "Mac OS X"));
         return Fx.call(() -> {
             Stage s = new Stage();
             other.show(s, url -> { });
@@ -482,8 +490,104 @@ class MainViewTest {
 
     private MenuItem menuItem(String id) {
         return node("#menuBar", MenuBar.class).getMenus().stream()
-                .flatMap(m -> m.getItems().stream())
+                .flatMap(m -> items(m).stream())
                 .filter(i -> id.equals(i.getId())).findFirst().orElseThrow(() -> new AssertionError("no " + id));
+    }
+
+    /** A menu's items, and its submenus' items, all the way down. */
+    private static java.util.List<MenuItem> items(Menu menu) {
+        java.util.List<MenuItem> all = new java.util.ArrayList<>();
+        for (MenuItem item : menu.getItems()) {
+            all.add(item);
+            if (item instanceof Menu sub) {
+                all.addAll(items(sub));
+            }
+        }
+        return all;
+    }
+
+    @Test
+    void helpHasAppearanceAboveAbout() throws Exception {
+        java.util.List<String> help = Fx.call(() -> node("#menuBar", MenuBar.class).getMenus().get(3).getItems()
+                .stream().map(i -> i.getText() == null ? "---" : i.getText()).toList());
+        assertEquals(java.util.List.of("Appearance", "---", "About faux-person-fx"), help);
+        java.util.List<String> choices = Fx.call(() -> ((Menu) menuItem("menuAppearance")).getItems().stream()
+                .map(MenuItem::getText).toList());
+        assertEquals(java.util.List.of("Light", "Dark", "System"), choices);
+        assertTrue(Fx.call(() -> ((RadioMenuItem) menuItem("menuAppearanceSystem")).isSelected()),
+                "System should be the starting choice");
+    }
+
+    @Test
+    void lightAndDarkSwitchTheWholeWindow() throws Exception {
+        assertFalse(Fx.call(view::showsDark), "opened dark with the OS light");
+        Fx.run(() -> menuItem("menuAppearanceDark").fire());
+        assertTrue(Fx.call(view::showsDark));
+        assertTrue(Fx.call(() -> ((RadioMenuItem) menuItem("menuAppearanceDark")).isSelected()));
+        Fx.run(() -> menuItem("menuAppearanceLight").fire());
+        assertFalse(Fx.call(view::showsDark));
+        assertFalse(Fx.call(() -> ((RadioMenuItem) menuItem("menuAppearanceDark")).isSelected()));
+    }
+
+    @Test
+    void systemFollowsTheOs() throws Exception {
+        Fx.run(() -> menuItem("menuAppearanceLight").fire());
+        osDark.set(true);
+        Fx.run(() -> menuItem("menuAppearanceSystem").fire());
+        awaitDark(true);
+
+        // Choosing System again asks the OS again, rather than reusing the last answer.
+        osDark.set(false);
+        Fx.run(() -> menuItem("menuAppearanceSystem").fire());
+        awaitDark(false);
+
+        // Light and Dark ignore the OS.
+        osDark.set(true);
+        Fx.run(() -> menuItem("menuAppearanceLight").fire());
+        Thread.sleep(200);
+        assertFalse(Fx.call(view::showsDark), "Light followed the OS");
+    }
+
+    @Test
+    void theAboutDialogFollowsTheAppearance() throws Exception {
+        Fx.run(() -> menuItem("menuAppearanceDark").fire());
+        boolean dark = Fx.call(() -> AboutDialog.create(stage, new About("1", "2"), url -> { })
+                .getDialogPane().getScene().getStylesheets().contains(Appearance.DARK_STYLESHEET));
+        assertTrue(dark, "About stayed light in a dark window");
+    }
+
+    @Test
+    void theAppearanceIsKeptForTheNextSession(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir)
+            throws Exception {
+        FauxFxProperties properties = new FauxFxProperties(100, 1000, "", dir.resolve("appearance.txt").toString());
+        Stage first = openWith(properties);
+        Fx.run(() -> ((RadioMenuItem) appearanceItem(first, "Dark")).fire());
+        Fx.run(first::close);
+
+        Stage second = openWith(properties);
+        try {
+            assertTrue(Fx.call(() -> second.getScene().getStylesheets().contains(Appearance.DARK_STYLESHEET)),
+                    "the next session opened light");
+            assertTrue(Fx.call(() -> ((RadioMenuItem) appearanceItem(second, "Dark")).isSelected()));
+        } finally {
+            Fx.run(second::close);
+        }
+    }
+
+    private static MenuItem appearanceItem(Stage window, String label) {
+        MenuBar bar = (MenuBar) window.getScene().lookup("#menuBar");
+        return items(bar.getMenus().get(3)).stream()
+                .filter(i -> ("menuAppearance" + label).equals(i.getId())).findFirst().orElseThrow();
+    }
+
+    private void awaitDark(boolean expected) throws Exception {
+        long deadline = System.nanoTime() + 5_000_000_000L;
+        while (Fx.call(view::showsDark) != expected) {
+            if (System.nanoTime() > deadline) {
+                throw new AssertionError("never became " + (expected ? "dark" : "light"));
+            }
+            Thread.sleep(20);
+        }
     }
 
     private void generate(String count, String seed) throws Exception {
