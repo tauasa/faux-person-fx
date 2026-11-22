@@ -54,6 +54,18 @@ class AboutDialogTest {
         assertEquals("https://github.com/tauasa/faux-person-fx", Fx.call(link::getText));
         Fx.run(link::fire);
         assertEquals(List.of("https://github.com/tauasa/faux-person-fx"), opened);
+
+        Hyperlink website = Fx.call(() -> (Hyperlink) dialog.getDialogPane().lookup("#aboutWebsite"));
+        assertEquals("https://tauasa.org", Fx.call(website::getText));
+        Fx.run(website::fire);
+        assertEquals(List.of("https://github.com/tauasa/faux-person-fx", "https://tauasa.org"), opened);
+
+        // The website link sits directly below the GitHub link.
+        int below = Fx.call(() -> {
+            var children = ((javafx.scene.layout.VBox) dialog.getDialogPane().getContent()).getChildren();
+            return children.indexOf(website) - children.indexOf(link);
+        });
+        assertEquals(1, below);
     }
 
     @Test

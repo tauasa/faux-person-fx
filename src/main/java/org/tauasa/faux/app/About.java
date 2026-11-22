@@ -12,6 +12,7 @@ public class About {
 
     public static final String NAME = "faux-person-fx";
     public static final String PROJECT_URL = "https://github.com/tauasa/faux-person-fx";
+    public static final String WEBSITE_URL = "https://tauasa.org";
     public static final String COPYRIGHT = "Copyright (c) 2026 Tauasa Timoteo";
 
     private final String version;

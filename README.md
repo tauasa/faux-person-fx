@@ -76,7 +76,7 @@ Cmd on macOS and Ctrl elsewhere.
 | Edit | Select All (Shortcut+A) | Selects every row in the tab, or all the text in a text box |
 | Edit | Clear Tab | Same as the Clear button |
 | View | Names, Companies, People (Shortcut+1, 2, 3) | Switches tab |
-| Help | About faux-person-fx | The version, the license, the licenses of what it's built with, and a link to the GitHub project |
+| Help | About faux-person-fx | The version, the license, the licenses of what it's built with, and links to the GitHub project and tauasa.org |
 
 On macOS the screen's menu bar shows JavaFX's own application menu, named
 `java`, with Quit (Cmd+Q); the app's menus are in its window. Edit has Copy and Select All but no Cut, Paste or Undo, since rows
