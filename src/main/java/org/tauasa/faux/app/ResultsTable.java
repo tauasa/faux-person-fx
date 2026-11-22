@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -13,7 +14,9 @@ import javafx.collections.transformation.SortedList;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.input.MouseButton;
 
 /**
  * A {@link TableView} built from {@link Column}s. Every column sorts, and the
@@ -53,6 +56,26 @@ final class ResultsTable<T> {
         sortColumn.setSortType(TableColumn.SortType.ASCENDING);
         view.getSortOrder().add(sortColumn);
         view.setPlaceholder(new Label("Nothing yet. Press Generate."));
+    }
+
+    /**
+     * What a double-click on a row does, given the row. Double-clicking an
+     * empty line below the rows, or with another button, does nothing.
+     */
+    void setOnRowOpen(Consumer<T> open) {
+        view.setRowFactory(table -> {
+            TableRow<T> row = new TableRow<>();
+            row.setOnMouseClicked(e -> {
+                if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2 && !row.isEmpty()) {
+                    open.accept(row.getItem());
+                }
+            });
+            return row;
+        });
+    }
+
+    List<Column<T>> columns() {
+        return columns;
     }
 
     TableView<T> view() {

@@ -23,6 +23,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Menu;
@@ -601,6 +602,9 @@ public class MainView {
         Sheet(Kind kind, List<Column<T>> columns, Function<GenerateRequest, Generated<T>> generator) {
             this.kind = kind;
             this.table = new ResultsTable<>(columns, Columns.defaultSort(kind));
+            if (kind == Kind.COMPANIES || kind == Kind.PEOPLE) {
+                table.setOnRowOpen(this::open);
+            }
             this.generator = generator;
         }
 
@@ -635,6 +639,23 @@ public class MainView {
             Thread worker = new Thread(task, "faux-generate");
             worker.setDaemon(true);
             worker.start();
+        }
+
+        /** A double-clicked row, in a modal dialog of its own. */
+        void open(T row) {
+            Dialog<Void> dialog = RecordDialog.create(stage, kind, heading(row), table.columns(), row);
+            // show(), not showAndWait(): it's modal either way, and the FX thread stays free.
+            dialog.show();
+        }
+
+        private String heading(T row) {
+            if (row instanceof org.tauasa.faux.model.Person person) {
+                return person.name().fullName();
+            }
+            if (row instanceof org.tauasa.faux.model.Company company) {
+                return company.name();
+            }
+            return String.valueOf(row);
         }
 
         void clear() {

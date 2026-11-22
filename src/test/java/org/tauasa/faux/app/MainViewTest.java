@@ -429,6 +429,102 @@ class MainViewTest {
         }
     }
 
+    @Test
+    void doubleClickingAPersonOpensItInAModalDialog() throws Exception {
+        selectTab(2);
+        generate("20", "4");
+        org.tauasa.faux.model.Person first = Fx.call(() ->
+                (org.tauasa.faux.model.Person) selectedTable().getItems().get(0));
+
+        Fx.run(() -> row(0).fireEvent(click(2)));
+        Stage dialog = awaitDialog();
+        try {
+            assertEquals("Person: " + first.name().fullName(), Fx.call(dialog::getTitle));
+            assertEquals(javafx.stage.Modality.APPLICATION_MODAL, Fx.call(dialog::getModality));
+            assertEquals(stage, Fx.call(dialog::getOwner));
+            assertEquals(first.lastName(), field(dialog, "lastName").getText());
+            assertEquals(String.valueOf(first.ageOn(java.time.LocalDate.now())), field(dialog, "age").getText());
+            assertEquals(first.employer().domain(), field(dialog, "employerDomain").getText());
+            assertEquals(first.dateOfBirth().toString(), field(dialog, "dateOfBirth").getText());
+            TextField email = field(dialog, "email");
+            assertFalse(Fx.call(email::isEditable), "the record can be edited");
+            int fields = Fx.call(() -> dialog.getScene().getRoot().lookupAll(".text-field").size());
+            assertEquals(Columns.people(java.time.LocalDate.now()).size(), fields, "a field is missing");
+        } finally {
+            Fx.run(dialog::close);
+        }
+    }
+
+    @Test
+    void doubleClickingACompanyOpensItInAModalDialog() throws Exception {
+        selectTab(1);
+        generate("10", "4");
+        org.tauasa.faux.model.Company second = Fx.call(() ->
+                (org.tauasa.faux.model.Company) selectedTable().getItems().get(1));
+        Fx.run(() -> row(1).fireEvent(click(2)));
+        Stage dialog = awaitDialog();
+        try {
+            assertEquals("Company: " + second.name(), Fx.call(dialog::getTitle));
+            assertEquals(second.domain(), field(dialog, "domain").getText());
+            assertEquals(second.city(), field(dialog, "city").getText());
+        } finally {
+            Fx.run(dialog::close);
+        }
+    }
+
+    @Test
+    void namesAndSingleClicksOpenNothing() throws Exception {
+        generate("10", "4");
+        Fx.run(() -> row(0).fireEvent(click(2)));
+        selectTab(2);
+        generate("10", "4");
+        Fx.run(() -> row(0).fireEvent(click(1)));
+        Thread.sleep(200);
+        assertEquals(java.util.List.of(), Fx.call(this::otherWindows), "a dialog opened");
+    }
+
+    /** The table row showing the item at this index, laid out first so it exists. */
+    private javafx.scene.control.TableRow<?> row(int index) {
+        TableView<?> table = selectedTable();
+        table.applyCss();
+        table.layout();
+        return table.lookupAll(".table-row-cell").stream()
+                .map(n -> (javafx.scene.control.TableRow<?>) n)
+                .filter(r -> r.getIndex() == index && !r.isEmpty())
+                .findFirst().orElseThrow(() -> new AssertionError("no row " + index));
+    }
+
+    private java.util.List<Stage> otherWindows() {
+        return javafx.stage.Window.getWindows().stream()
+                .filter(w -> w instanceof Stage && w != stage && w.isShowing()
+                        && ((Stage) w).getOwner() == stage)
+                .map(w -> (Stage) w).toList();
+    }
+
+    private Stage awaitDialog() throws Exception {
+        long deadline = System.nanoTime() + 5_000_000_000L;
+        while (true) {
+            java.util.List<Stage> open = Fx.call(this::otherWindows);
+            if (open.size() == 1) {
+                return open.get(0);
+            }
+            if (System.nanoTime() > deadline) {
+                throw new AssertionError("expected one dialog, found " + open.size());
+            }
+            Thread.sleep(20);
+        }
+    }
+
+    private static TextField field(Stage dialog, String key) throws Exception {
+        return Fx.call(() -> (TextField) dialog.getScene().getRoot().lookup("#record-" + key));
+    }
+
+    private static javafx.scene.input.MouseEvent click(int count) {
+        return new javafx.scene.input.MouseEvent(javafx.scene.input.MouseEvent.MOUSE_CLICKED, 5, 5, 5, 5,
+                javafx.scene.input.MouseButton.PRIMARY, count,
+                false, false, false, false, true, false, false, true, false, false, null);
+    }
+
     @SuppressWarnings("unchecked")
     private ComboBox<String> seedBox() {
         return node("#seed", ComboBox.class);
