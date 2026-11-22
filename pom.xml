@@ -13,7 +13,7 @@
 
   <groupId>org.tauasa</groupId>
   <artifactId>faux-person-fx</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0</version>
   <packaging>jar</packaging>
 
   <name>faux-person-fx</name>

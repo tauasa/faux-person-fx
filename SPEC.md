@@ -6,7 +6,7 @@ that sort by any column.
 
 | | |
 |---|---|
-| Coordinates | `org.tauasa:faux-person-fx:0.1.0-SNAPSHOT`, not published |
+| Coordinates | `org.tauasa:faux-person-fx:0.1.0`, released as jars on GitHub, not on Maven Central |
 | Package | `org.tauasa.faux.app` |
 | Java | 17 (`maven.compiler.release=17`) |
 | Build | Maven, with `spring-boot-starter-parent` |
@@ -265,6 +265,9 @@ run headless.
 - `mvn spring-boot:run` runs it from source.
 - `mvn package`, then `java -jar target/faux-person-fx.jar`, runs the fat
   jar.
+
+- `./release-jars.sh` builds one jar per platform for a release
+  (RELEASING.md).
 
 ## 6. Repo and CI
 

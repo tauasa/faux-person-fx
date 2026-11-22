@@ -4,6 +4,27 @@ A desktop app that generates random names, companies and people with
 [faux-person](https://github.com/tauasa/faux-person) and shows them in tables
 you can sort by any column. Built with Java 17, Spring Boot and JavaFX.
 
+## Download
+
+Each [release](https://github.com/tauasa/faux-person-fx/releases) has a jar
+for each platform. Take the one for yours, then, with Java 17 or later
+installed:
+
+```bash
+java -jar faux-person-fx-<version>-<platform>.jar
+```
+
+| Platform | Jar |
+|---|---|
+| Windows (x64) | `windows-x64` |
+| Linux (x64) | `linux-x64` |
+| Linux (ARM64) | `linux-aarch64` |
+| macOS (Apple Silicon) | `macos-aarch64` |
+| macOS (Intel) | `macos-x64` |
+
+`SHA256SUMS` lists each jar's checksum. [RELEASING.md](RELEASING.md) says how
+a release is built.
+
 ## Run it
 
 Needs JDK 17 or later on `PATH`, and Maven. JavaFX comes from Maven, so
