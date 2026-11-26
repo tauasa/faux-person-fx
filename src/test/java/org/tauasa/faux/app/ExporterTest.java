@@ -28,19 +28,19 @@ class ExporterTest {
 
     @Test
     void csvQuotesWhatRfc4180SaysAndEndsLinesWithCrlf() throws IOException {
-        assertEquals("First name,Last name\r\n"
-                + "Ana,\"O'Neil, Jr.\"\r\n"
-                + "\"Bo \"\"Bobby\"\"\",Pipe|Name\r\n"
-                + "\"Cy\nLine\",Back\\slash\r\n",
+        assertEquals("First name,Last name,Native name\r\n"
+                + "Ana,\"O'Neil, Jr.\",\r\n"
+                + "\"Bo \"\"Bobby\"\"\",Pipe|Name,\r\n"
+                + "\"Cy\nLine\",Back\\slash,\r\n",
                 write(Columns.names(), TRICKY, ExportFormat.CSV));
     }
 
     @Test
     void pipeQuotesFieldsHoldingAPipeAndEndsLinesWithLf() throws IOException {
-        assertEquals("First name|Last name\n"
-                + "Ana|O'Neil, Jr.\n"
-                + "\"Bo \"\"Bobby\"\"\"|\"Pipe|Name\"\n"
-                + "\"Cy\nLine\"|Back\\slash\n",
+        assertEquals("First name|Last name|Native name\n"
+                + "Ana|O'Neil, Jr.|\n"
+                + "\"Bo \"\"Bobby\"\"\"|\"Pipe|Name\"|\n"
+                + "\"Cy\nLine\"|Back\\slash|\n",
                 write(Columns.names(), TRICKY, ExportFormat.PIPE));
     }
 
@@ -69,9 +69,22 @@ class ExporterTest {
         assertEquals(people.get(0).address().postalCode(), first.get("postalCode"));
     }
 
+    /** A South Korean name's Hangul comes through every format unchanged. */
+    @Test
+    void nativeNamesExportInTheirOwnScript() throws IOException {
+        List<Name> korean = List.of(new Name("Yeong-min", "Jeon", java.util.Optional.of(
+                new org.tauasa.faux.model.NativeName("영민", "전", "전영민"))));
+        assertEquals("First name,Last name,Native name\r\nYeong-min,Jeon,전영민\r\n",
+                write(Columns.names(), korean, ExportFormat.CSV));
+        assertEquals("First name|Last name|Native name\nYeong-min|Jeon|전영민\n",
+                write(Columns.names(), korean, ExportFormat.PIPE));
+        List<Map<String, Object>> rows = JsonPath.read(write(Columns.names(), korean, ExportFormat.JSON), "$");
+        assertEquals("전영민", rows.get(0).get("nativeName"));
+    }
+
     @Test
     void emptyTabWritesAHeaderOrAnEmptyArray() throws IOException {
-        assertEquals("First name,Last name\r\n", write(Columns.names(), List.of(), ExportFormat.CSV));
+        assertEquals("First name,Last name,Native name\r\n", write(Columns.names(), List.of(), ExportFormat.CSV));
         assertEquals(List.of(), JsonPath.read(write(Columns.names(), List.of(), ExportFormat.JSON), "$"));
     }
 

@@ -219,7 +219,7 @@ class MainViewTest {
             Fx.run(() -> menuItem("menuCopy").fire());
             String copied = Fx.call(() -> javafx.scene.input.Clipboard.getSystemClipboard().getString());
             String[] lines = copied.split("\n");
-            assertEquals("First name\tLast name", lines[0]);
+            assertEquals("First name\tLast name\tNative name", lines[0]);
             assertEquals(5, lines.length);
         } finally {
             restoreClipboard(saved);
@@ -564,10 +564,10 @@ class MainViewTest {
         assertTrue(status().startsWith("Saved 30 names to names.csv"), status());
 
         java.util.List<String> lines = java.nio.file.Files.readAllLines(written);
-        assertEquals("First name,Last name", lines.get(0));
+        assertEquals("First name,Last name,Native name", lines.get(0));
         assertEquals(31, lines.size());
         java.util.List<String> lastNames = lines.subList(1, lines.size()).stream()
-                .map(l -> l.substring(l.indexOf(',') + 1)).toList();
+                .map(l -> l.split(",", -1)[1]).toList();
         assertEquals(lastNames.stream().sorted(String.CASE_INSENSITIVE_ORDER).toList(), lastNames,
                 "saved in the table's last-name order");
 
