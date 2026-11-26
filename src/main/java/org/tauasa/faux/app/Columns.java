@@ -6,22 +6,33 @@ import java.util.Objects;
 
 import org.tauasa.faux.model.Company;
 import org.tauasa.faux.model.Name;
+import org.tauasa.faux.model.NativeName;
 import org.tauasa.faux.model.Person;
 
 /** The columns each kind of row shows, and the one each sorts by first. */
 public final class Columns {
 
     public static final String LAST_NAME = "Last name";
+    public static final String NATIVE_NAME = "Native name";
     public static final String COMPANY_NAME = "Name";
 
     private Columns() {
     }
 
-    /** First and last name. */
+    /** First and last name, and the name in its own script. */
     public static List<Column<Name>> names() {
         return List.of(
                 new Column<>("First name", Name::firstName),
-                new Column<>(LAST_NAME, Name::lastName));
+                new Column<>(LAST_NAME, Name::lastName),
+                new Column<>(NATIVE_NAME, Columns::nativeName));
+    }
+
+    /**
+     * The whole name in its own script as that language writes it, such as
+     * 전영민 for a South Korean, or "" when faux-person has none for its region.
+     */
+    static String nativeName(Name n) {
+        return n.nativeName().map(NativeName::fullName).orElse("");
     }
 
     /** Every field of a company. */
@@ -44,6 +55,7 @@ public final class Columns {
         return List.of(
                 new Column<>("First name", Person::firstName),
                 new Column<>(LAST_NAME, Person::lastName),
+                new Column<>(NATIVE_NAME, p -> nativeName(p.name())),
                 // Enums show and sort by name, A to Z, not in declaration order.
                 new Column<>("Gender", p -> p.gender().name()),
                 new Column<>("Region", p -> p.region().name()),

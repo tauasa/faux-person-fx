@@ -110,7 +110,7 @@ class ResultsTableTest {
             return new String[] {none, table.selectedAsTsv()};
         });
         assertEquals("", copied[0]);
-        assertEquals("First name\tLast name\nBo b\tAvery\nAna\tZed\n", copied[1]);
+        assertEquals("First name\tLast name\tNative name\nBo b\tAvery\t\nAna\tZed\t\n", copied[1]);
     }
 
     private static <T> Column<T> column(List<Column<T>> columns, String title) {

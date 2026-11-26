@@ -30,6 +30,7 @@ class ColumnsTest {
         Map<String, Comparator<Person>> m = new LinkedHashMap<>();
         m.put("First name", text(Person::firstName));
         m.put("Last name", text(Person::lastName));
+        m.put("Native name", text(p -> Columns.nativeName(p.name())));
         m.put("Gender", Comparator.comparing(p -> p.gender().name()));
         m.put("Region", Comparator.comparing(p -> p.region().name()));
         m.put("Date of birth", Comparator.comparing(Person::dateOfBirth));
@@ -61,6 +62,7 @@ class ColumnsTest {
         Map<String, Comparator<Name>> m = new LinkedHashMap<>();
         m.put("First name", text(Name::firstName));
         m.put("Last name", text(Name::lastName));
+        m.put("Native name", text(Columns::nativeName));
         return m;
     }
 
@@ -103,6 +105,7 @@ class ColumnsTest {
         Map<String, String> titleOf = Map.ofEntries(
                 Map.entry("name.firstName", "First name"),
                 Map.entry("name.lastName", "Last name"),
+                Map.entry("name.nativeName", "Native name"),
                 Map.entry("gender", "Gender"),
                 Map.entry("region", "Region"),
                 Map.entry("dateOfBirth", "Date of birth"),
@@ -125,7 +128,13 @@ class ColumnsTest {
         List<Column<Person>> columns = Columns.people(TODAY);
         for (Map.Entry<String, Object> field : fields.entrySet()) {
             Object shown = column(columns, titleOf.get(field.getKey())).valueOf(p);
-            Object expected = field.getValue() instanceof Enum<?> e ? e.name() : field.getValue();
+            Object expected = field.getValue();
+            if (expected instanceof Enum<?> e) {
+                expected = e.name();
+            } else if (expected instanceof java.util.Optional<?> o) {
+                // The native name shows as its full form, or blank when the region has none.
+                expected = o.map(n -> ((org.tauasa.faux.model.NativeName) n).fullName()).orElse("");
+            }
             assertEquals(expected, shown, field.getKey());
         }
     }
