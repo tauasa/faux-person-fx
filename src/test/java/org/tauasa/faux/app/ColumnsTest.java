@@ -45,6 +45,7 @@ class ColumnsTest {
         m.put("Employer", text(p -> p.employer().name()));
         m.put("Employer city", text(p -> p.employer().city()));
         m.put("Employer state", text(p -> p.employer().state()));
+        m.put("Employer country", text(p -> p.employer().country()));
         m.put("Employer domain", text(p -> p.employer().domain()));
         return m;
     }
@@ -54,6 +55,7 @@ class ColumnsTest {
         m.put("Name", text(Company::name));
         m.put("City", text(Company::city));
         m.put("State", text(Company::state));
+        m.put("Country", text(Company::country));
         m.put("Domain", text(Company::domain));
         return m;
     }
@@ -119,6 +121,7 @@ class ColumnsTest {
                 Map.entry("employer.name", "Employer"),
                 Map.entry("employer.city", "Employer city"),
                 Map.entry("employer.state", "Employer state"),
+                Map.entry("employer.country", "Employer country"),
                 Map.entry("employer.domain", "Employer domain"));
         Person p = service.people(request).rows().get(0);
         Map<String, Object> fields = new LinkedHashMap<>();
@@ -141,7 +144,8 @@ class ColumnsTest {
 
     @Test
     void everyCompanyFieldHasItsOwnColumn() throws Exception {
-        Map<String, String> titleOf = Map.of("name", "Name", "city", "City", "state", "State", "domain", "Domain");
+        Map<String, String> titleOf = Map.of("name", "Name", "city", "City", "state", "State", "country", "Country",
+                "domain", "Domain");
         Company c = service.companies(request).rows().get(0);
         Map<String, Object> fields = new LinkedHashMap<>();
         flatten("", c, fields);

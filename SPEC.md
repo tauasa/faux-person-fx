@@ -10,7 +10,7 @@ that sort by any column.
 | Package | `org.tauasa.faux.app` |
 | Java | 17 (`maven.compiler.release=17`) |
 | Build | Maven, with `spring-boot-starter-parent` |
-| Dependencies | `org.tauasa:faux-person:0.3.0`, Spring Boot 4.2 (core only, no web server), JavaFX 21 LTS (`javafx-controls`). Spring Boot's test starter at test scope |
+| Dependencies | `org.tauasa:faux-person:0.4.0`, Spring Boot 4.2 (core only, no web server), JavaFX 21 LTS (`javafx-controls`). Spring Boot's test starter at test scope |
 | Status | Draft, 2026-11-21 |
 
 ## Goals
@@ -196,13 +196,17 @@ A modal dialog, owned by the window, showing:
 | Kind | Columns | Sorted first by |
 |---|---|---|
 | Names | First name, Last name, Native name | Last name |
-| Companies | Name, City, State, Domain | Name |
-| People | First name, Last name, Native name, Gender, Region, Date of birth, Age, Email, Phone, Street, City, State, Postal code, Country, Employer, Employer city, Employer state, Employer domain | Last name |
+| Companies | Name, City, State, Country, Domain | Name |
+| People | First name, Last name, Native name, Gender, Region, Date of birth, Age, Email, Phone, Street, City, State, Postal code, Country, Employer, Employer city, Employer state, Employer country, Employer domain | Last name |
 
-Native name is the whole name in its own script, as faux-person 0.3.0 gives
-it: Hangul for South Korean names (전영민), and blank for every other region.
-It reaches the copy, the saved files (`nativeName` in JSON) and the record
-dialog, like any column.
+Native name is the whole name in its own script, as faux-person gives it:
+Hangul for South Korean names (전영민), and from 0.4.0 kanji, Cyrillic, Greek,
+Hebrew, Arabic and Persian for those regions' names that Wikidata spells in
+them; blank otherwise. Country (a company's, or a person's employer's) is the
+headquarters' ISO 3166-1 code; State is blank outside the US. faux-person 0.4.0
+adds 4,000 international companies, and a person works for one in their
+region's countries. These reach the copy, the saved files (`nativeName`,
+`country` and `employerCountry` in JSON) and the record dialog, like any column.
 
 Date of birth sorts as a date and Age as a number, not as text. Gender and
 Region show their names and sort A to Z, and the Region list is A to Z after
