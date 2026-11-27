@@ -117,7 +117,9 @@ Spring owns the objects. JavaFX owns the window.
   A failure stays on that tab's status line.
 - **Count** runs from 1 to `max-count`.
 - The status bar says how many rows the selected tab holds and the seed that
-  made them.
+  made them. The same count ("25 people") is centered on the tab row, level
+  with the tabs; it lets clicks through.
+- The tabs run People, Companies, Names, and the window opens on People.
 - Rows can be selected several at a time.
 - **Double-clicking a row on the Companies or People tab** opens it in a
   `RecordDialog`, titled `Person: Jane Doe` or `Company: Costco [faux]`.
@@ -135,8 +137,8 @@ Spring owns the objects. JavaFX owns the window.
 | Edit | Copy | Shortcut+C | The selected rows, in the order shown, as tab-separated text with a header line. Tabs and line breaks inside a value become spaces. In a focused text box, copies its text instead. Disabled when there's nothing to copy |
 | Edit | Select All | Shortcut+A | Every row of the tab, or a focused text box's text |
 | Edit | Clear Tab | | As the Clear button, and disabled when it is |
-| View | Names, Companies, People | Shortcut+1, 2, 3 | Selects that tab. The checked item follows the selected tab |
-| Help | Appearance > Light, Dark, System | | Switches the stylesheet now and saves the choice. The checked item is the current choice. System asks the OS off the FX thread, again each time the window regains focus |
+| View | People, Companies, Names | Shortcut+1, 2, 3 | Selects that tab. The checked item follows the selected tab |
+| View | Appearance > Light, Dark, System | | Switches the stylesheet now and saves the choice. The checked item is the current choice. System asks the OS off the FX thread, again each time the window regains focus |
 | Help | About faux-person-fx | | The About dialog |
 
 Shortcut is Cmd on macOS and Ctrl elsewhere. The menu bar is in the window
@@ -159,7 +161,7 @@ saved where, or why it couldn't be.
 
 ### Appearance
 
-Help > Appearance holds Light, Dark and System, with System the default. The
+View > Appearance, the last item in View, holds Light, Dark and System, with System the default. The
 window opens in the saved choice. Dialogs and popups copy the window's
 stylesheets, so they follow it. The splash reads the saved choice too, so a
 dark app doesn't open with a light splash.
@@ -251,7 +253,8 @@ run headless.
 | Saving replaces the file with no temp file left, and a file that can't be written doesn't throw | A crash corrupts the history, or a bad path breaks Generate |
 | A second window on the same file opens with each tab's seeds and last seed | History isn't carried to the next session |
 | `history-file` expands `~/`, and blank turns it off | The history lands in the wrong place, or can't be turned off |
-| Help holds Appearance (Light, Dark, System) above About, with System checked to start | The choice can't be found |
+| View ends with Appearance (Light, Dark, System), below the tabs, with System checked to start; Help holds About | The choice can't be found |
+| The tabs run People, Companies, Names and the window opens on People; the row count on the tab row follows generating, clearing and switching, and is centered | The tabs or the count move |
 | Light and Dark switch the window's stylesheet and the checked item; System follows the OS, asking again when chosen; Light ignores a dark OS | The window shows the wrong appearance |
 | About opened from a dark window is dark | Dialogs ignore the appearance |
 | The choice is saved and the next window opens in it; a missing or unreadable file means System | The choice isn't remembered |

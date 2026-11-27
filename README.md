@@ -98,8 +98,8 @@ Cmd on macOS and Ctrl elsewhere.
 | Edit | Copy (Shortcut+C) | Copies the selected rows, with a header line, as tab-separated text that pastes into a spreadsheet as columns. In a text box, copies its text instead |
 | Edit | Select All (Shortcut+A) | Selects every row in the tab, or all the text in a text box |
 | Edit | Clear Tab | Same as the Clear button |
-| View | Names, Companies, People (Shortcut+1, 2, 3) | Switches tab |
-| Help | Appearance > Light, Dark, System | Switches the look of the whole app, dialogs included. System follows your operating system's light or dark setting, and checks it again when the window comes back to the front. The choice is remembered |
+| View | People, Companies, Names (Shortcut+1, 2, 3) | Switches tab. The tabs run in the same order, and the window opens on People |
+| View | Appearance > Light, Dark, System | Switches the look of the whole app, dialogs included. System follows your operating system's light or dark setting, and checks it again when the window comes back to the front. The choice is remembered |
 | Help | About faux-person-fx | The version, the license, the licenses of what it's built with, and links to the GitHub project and tauasa.org |
 
 On macOS the screen's menu bar shows JavaFX's own application menu, named

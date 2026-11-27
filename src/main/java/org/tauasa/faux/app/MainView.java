@@ -48,6 +48,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -90,6 +91,11 @@ public class MainView {
     private Button generate;
     private Button clear;
     private Label status;
+    /** The selected tab's row count, in the middle of the tab row. */
+    private Label rowCount;
+
+    /** The tabs, left to right: People first, Names last. */
+    static final List<Kind> TAB_ORDER = List.of(Kind.PEOPLE, Kind.COMPANIES, Kind.NAMES);
     private Stage stage;
     private Consumer<String> openLink;
     private MenuItem copy;
@@ -128,7 +134,8 @@ public class MainView {
 
         tabs = new TabPane();
         tabs.setId("tabs");
-        for (Sheet<?> sheet : sheets.values()) {
+        for (Kind kind : TAB_ORDER) {
+            Sheet<?> sheet = sheets.get(kind);
             Tab tab = new Tab(sheet.kind.title(), sheet.table.view());
             tab.setClosable(false);
             tab.setUserData(sheet.kind);
@@ -146,7 +153,15 @@ public class MainView {
         HBox toolbar = toolbar();
         BorderPane root = new BorderPane();
         root.setTop(new VBox(menuBar(), toolbar));
-        root.setCenter(tabs);
+        // The row count sits on the tab row, centered. It lets clicks through,
+        // so it never covers a tab.
+        rowCount = new Label();
+        rowCount.setId("rowCount");
+        rowCount.setMouseTransparent(true);
+        StackPane tabsAndCount = new StackPane(tabs, rowCount);
+        StackPane.setAlignment(rowCount, Pos.TOP_CENTER);
+        StackPane.setMargin(rowCount, new Insets(6, 0, 0, 0));
+        root.setCenter(tabsAndCount);
         root.setBottom(statusBar());
 
         refreshControls();
@@ -319,6 +334,7 @@ public class MainView {
             view.getItems().add(show);
         }
 
+        // Appearance is the last item in View, after the tabs.
         Menu appearanceMenu = new Menu("Appearance");
         appearanceMenu.setId("menuAppearance");
         for (Appearance choice : Appearance.values()) {
@@ -330,8 +346,9 @@ public class MainView {
             option.setOnAction(e -> setAppearance(choice));
             appearanceMenu.getItems().add(option);
         }
+        view.getItems().addAll(new SeparatorMenuItem(), appearanceMenu);
         MenuItem aboutItem = item("menuAbout", "About " + About.NAME, null, e -> showAbout());
-        Menu help = new Menu("Help", null, appearanceMenu, new SeparatorMenuItem(), aboutItem);
+        Menu help = new Menu("Help", null, aboutItem);
 
         MenuBar bar = new MenuBar(file, edit, view, help);
         bar.setId("menuBar");
@@ -444,7 +461,7 @@ public class MainView {
         return target.file();
     }
 
-    /** Help > Appearance: switches now and remembers the choice for the next session. */
+    /** View > Appearance: switches now and remembers the choice for the next session. */
     void setAppearance(Appearance choice) {
         appearance = choice;
         appearanceGroup.getToggles().forEach(t -> t.setSelected(t.getUserData() == choice));
@@ -579,6 +596,9 @@ public class MainView {
         generate.setDisable(sheet.running);
         clear.setDisable(sheet.running || sheet.table.size() == 0);
         status.setText(sheet.describe());
+        if (rowCount != null) {
+            rowCount.setText(sheet.kind.count(sheet.table.size()));
+        }
         Tab tab = tabs.getSelectionModel().getSelectedItem();
         viewGroup.getToggles().stream().filter(t -> t.getUserData() == tab).findFirst()
                 .ifPresent(t -> t.setSelected(true));

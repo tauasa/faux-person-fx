@@ -14,6 +14,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.Spinner;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -53,6 +54,51 @@ class MainViewTest {
             return s;
         });
         scene = stage.getScene();
+        // The window opens on People; most tests start from Names.
+        selectTab(Kind.NAMES);
+    }
+
+    /** People, Companies, Names, left to right; the window opens on People. */
+    @Test
+    void peopleIsTheFirstTabAndNamesTheLast() throws Exception {
+        FauxFxProperties properties = new FauxFxProperties(100, 1000);
+        MainView fresh = new MainView(new FauxService(properties), properties, new About("1.2.3", "0.2.0"), systemTheme);
+        Stage other = Fx.call(() -> {
+            Stage s = new Stage();
+            fresh.show(s, opened::add);
+            return s;
+        });
+        try {
+            TabPane tabs = (TabPane) other.getScene().lookup("#tabs");
+            assertEquals(java.util.List.of("People", "Companies", "Names"),
+                    Fx.call(() -> tabs.getTabs().stream().map(Tab::getText).toList()));
+            assertEquals("People", Fx.call(() -> tabs.getSelectionModel().getSelectedItem().getText()));
+        } finally {
+            Fx.run(other::close);
+        }
+    }
+
+    /** The selected tab's row count sits on the tab row, and follows generating, clearing and switching. */
+    @Test
+    void theRowCountShowsOnTheTabRow() throws Exception {
+        Label count = node("#rowCount", Label.class);
+        assertEquals("0 names", Fx.call(count::getText));
+        generate("25", "42");
+        assertEquals("25 names", Fx.call(count::getText));
+        selectTab(Kind.PEOPLE);
+        assertEquals("0 people", Fx.call(count::getText));
+        selectTab(Kind.NAMES);
+        assertEquals("25 names", Fx.call(count::getText));
+        Fx.run(() -> node("#clear", Button.class).fire());
+        assertEquals("0 names", Fx.call(count::getText));
+        // On the tab row: level with the tab headers, centered, and not in the way of a click.
+        assertTrue(Fx.call(count::isMouseTransparent));
+        double countY = Fx.call(() -> count.localToScene(0, 0).getY());
+        double tabY = Fx.call(() -> node("#tabs", TabPane.class).localToScene(0, 0).getY());
+        assertTrue(countY - tabY < 20, "count " + countY + ", tabs " + tabY);
+        double middle = Fx.call(() -> count.localToScene(count.getWidth() / 2, 0).getX());
+        double width = Fx.call(() -> scene.getWidth());
+        assertTrue(Math.abs(middle - width / 2) < 20, "count's middle " + middle + ", window " + width);
     }
 
     @AfterEach
@@ -79,26 +125,26 @@ class MainViewTest {
     @Test
     void otherTabsKeepTheirRows() throws Exception {
         generate("25", "42");
-        selectTab(2);
+        selectTab(Kind.PEOPLE);
         assertEquals("No people yet.", status());
         assertEquals(0, rowsOnSelectedTab());
         generate("5", "7");
         assertEquals("5 people, seed 7", status());
 
-        selectTab(0);
+        selectTab(Kind.NAMES);
         assertEquals("25 names, seed 42", status());
         assertEquals(25, rowsOnSelectedTab());
     }
 
     @Test
     void controlsThatDontApplyAreDisabled() throws Exception {
-        selectTab(0);
+        selectTab(Kind.NAMES);
         assertTrue(Fx.call(() -> node("#realCompanies", CheckBox.class).isDisabled()), "names have no company");
         assertFalse(Fx.call(() -> node("#region", ComboBox.class).isDisabled()));
-        selectTab(1);
+        selectTab(Kind.COMPANIES);
         assertTrue(Fx.call(() -> node("#region", ComboBox.class).isDisabled()), "companies have no region");
         assertFalse(Fx.call(() -> node("#realCompanies", CheckBox.class).isDisabled()));
-        selectTab(2);
+        selectTab(Kind.PEOPLE);
         assertFalse(Fx.call(() -> node("#region", ComboBox.class).isDisabled()));
         assertFalse(Fx.call(() -> node("#realCompanies", CheckBox.class).isDisabled()));
     }
@@ -106,12 +152,12 @@ class MainViewTest {
     @Test
     void clearEmptiesOnlyTheSelectedTab() throws Exception {
         generate("25", "42");
-        selectTab(1);
+        selectTab(Kind.COMPANIES);
         generate("8", "3");
         Fx.run(() -> node("#clear", Button.class).fire());
         assertEquals("No companies yet.", status());
         assertEquals(0, rowsOnSelectedTab());
-        selectTab(0);
+        selectTab(Kind.NAMES);
         assertEquals(25, rowsOnSelectedTab());
     }
 
@@ -179,7 +225,7 @@ class MainViewTest {
 
     @Test
     void fileGenerateAndEditClearActOnTheSelectedTab() throws Exception {
-        selectTab(2);
+        selectTab(Kind.PEOPLE);
         Fx.run(() -> {
             node("#count", Spinner.class).getEditor().setText("15");
             seedField().setText("8");
@@ -187,9 +233,9 @@ class MainViewTest {
         });
         awaitDone();
         assertEquals("15 people, seed 8", status());
-        selectTab(0);
+        selectTab(Kind.NAMES);
         assertEquals("No names yet.", status(), "File > Generate filled the wrong tab");
-        selectTab(2);
+        selectTab(Kind.PEOPLE);
         Fx.run(() -> menuItem("menuClear").fire());
         assertEquals("No people yet.", status());
         assertTrue(Fx.call(() -> menuItem("menuClear").isDisable()), "nothing left to clear");
@@ -198,8 +244,8 @@ class MainViewTest {
     @Test
     void viewMenuAndTabsStayInStep() throws Exception {
         Fx.run(() -> menuItem("menuViewPeople").fire());
-        assertEquals(2, Fx.call(() -> node("#tabs", TabPane.class).getSelectionModel().getSelectedIndex()));
-        selectTab(1);
+        assertEquals(0, Fx.call(() -> node("#tabs", TabPane.class).getSelectionModel().getSelectedIndex()));
+        selectTab(Kind.COMPANIES);
         assertTrue(Fx.call(() -> ((RadioMenuItem) menuItem("menuViewCompanies")).isSelected()));
         assertFalse(Fx.call(() -> ((RadioMenuItem) menuItem("menuViewPeople")).isSelected()));
     }
@@ -256,7 +302,9 @@ class MainViewTest {
         assertEquals("Shortcut+A", Fx.call(() -> menuItem("menuSelectAll").getAccelerator().getName()));
         assertEquals("Shortcut+S", Fx.call(() -> menuItem("menuSave").getAccelerator().getName()));
         assertEquals("Shortcut+G", Fx.call(() -> menuItem("menuGenerate").getAccelerator().getName()));
-        assertEquals("Shortcut+1", Fx.call(() -> menuItem("menuViewNames").getAccelerator().getName()));
+        // The View shortcuts follow the tabs: People first, Names last.
+        assertEquals("Shortcut+1", Fx.call(() -> menuItem("menuViewPeople").getAccelerator().getName()));
+        assertEquals("Shortcut+3", Fx.call(() -> menuItem("menuViewNames").getAccelerator().getName()));
     }
 
     @Test
@@ -270,13 +318,13 @@ class MainViewTest {
     @Test
     void eachTabShowsItsOwnLastSeed() throws Exception {
         generate("10", "11");
-        selectTab(2);
+        selectTab(Kind.PEOPLE);
         assertEquals("", Fx.call(() -> seedField().getText()), "a tab with no runs shows no seed");
         generate("5", "22");
         assertEquals("22", Fx.call(() -> seedField().getText()));
-        selectTab(0);
+        selectTab(Kind.NAMES);
         assertEquals("11", Fx.call(() -> seedField().getText()));
-        selectTab(2);
+        selectTab(Kind.PEOPLE);
         assertEquals("22", Fx.call(() -> seedField().getText()));
 
         // Clear empties the table but the box keeps the last seed, to make it again.
@@ -291,7 +339,7 @@ class MainViewTest {
         generate("3", "3");
         generate("3", "1");
         assertEquals(java.util.List.of("1", "3", "2"), Fx.call(() -> java.util.List.copyOf(seedBox().getItems())));
-        selectTab(1);
+        selectTab(Kind.COMPANIES);
         assertTrue(Fx.call(() -> seedBox().getItems().isEmpty()), "another tab's seeds leaked in");
     }
 
@@ -307,7 +355,7 @@ class MainViewTest {
 
     @Test
     void choosingAPastSeedRestoresItsSettingsAndRemakesTheSameRows() throws Exception {
-        selectTab(2);
+        selectTab(Kind.PEOPLE);
         Fx.run(() -> {
             node("#region", ComboBox.class).getSelectionModel().select("JPN");
             node("#realCompanies", CheckBox.class).setSelected(true);
@@ -382,20 +430,20 @@ class MainViewTest {
             ((ComboBox<?>) firstScene.lookup("#seed")).getEditor().setText("31");
             ((Button) firstScene.lookup("#generate")).fire();
         });
-        awaitText(firstScene, "7 names, seed 31");
+        awaitText(firstScene, "7 people, seed 31");
         Fx.run(() -> {
             ((TabPane) firstScene.lookup("#tabs")).getSelectionModel().select(2);
             ((ComboBox<?>) firstScene.lookup("#seed")).getEditor().setText("32");
             ((Button) firstScene.lookup("#generate")).fire();
         });
-        awaitText(firstScene, "7 people, seed 32");
+        awaitText(firstScene, "7 names, seed 32");
         Fx.run(first::close);
 
         Stage second = openWith(file);
         Scene secondScene = second.getScene();
         try {
             assertEquals("31", Fx.call(() -> ((ComboBox<?>) secondScene.lookup("#seed")).getEditor().getText()),
-                    "the Names tab opened without its last seed");
+                    "the People tab opened without its last seed");
             assertEquals(java.util.List.of("31"),
                     Fx.call(() -> java.util.List.copyOf(((ComboBox<?>) secondScene.lookup("#seed")).getItems())));
             Fx.run(() -> ((TabPane) secondScene.lookup("#tabs")).getSelectionModel().select(2));
@@ -431,7 +479,7 @@ class MainViewTest {
 
     @Test
     void doubleClickingAPersonOpensItInAModalDialog() throws Exception {
-        selectTab(2);
+        selectTab(Kind.PEOPLE);
         generate("20", "4");
         org.tauasa.faux.model.Person first = Fx.call(() ->
                 (org.tauasa.faux.model.Person) selectedTable().getItems().get(0));
@@ -457,7 +505,7 @@ class MainViewTest {
 
     @Test
     void doubleClickingACompanyOpensItInAModalDialog() throws Exception {
-        selectTab(1);
+        selectTab(Kind.COMPANIES);
         generate("10", "4");
         org.tauasa.faux.model.Company second = Fx.call(() ->
                 (org.tauasa.faux.model.Company) selectedTable().getItems().get(1));
@@ -476,7 +524,7 @@ class MainViewTest {
     void namesAndSingleClicksOpenNothing() throws Exception {
         generate("10", "4");
         Fx.run(() -> row(0).fireEvent(click(2)));
-        selectTab(2);
+        selectTab(Kind.PEOPLE);
         generate("10", "4");
         Fx.run(() -> row(0).fireEvent(click(1)));
         Thread.sleep(200);
@@ -603,10 +651,13 @@ class MainViewTest {
     }
 
     @Test
-    void helpHasAppearanceAboveAbout() throws Exception {
-        java.util.List<String> help = Fx.call(() -> node("#menuBar", MenuBar.class).getMenus().get(3).getItems()
+    void viewEndsWithAppearanceAndHelpHasAbout() throws Exception {
+        java.util.List<String> view = Fx.call(() -> node("#menuBar", MenuBar.class).getMenus().get(2).getItems()
                 .stream().map(i -> i.getText() == null ? "---" : i.getText()).toList());
-        assertEquals(java.util.List.of("Appearance", "---", "About faux-person-fx"), help);
+        assertEquals(java.util.List.of("People", "Companies", "Names", "---", "Appearance"), view);
+        java.util.List<String> help = Fx.call(() -> node("#menuBar", MenuBar.class).getMenus().get(3).getItems()
+                .stream().map(MenuItem::getText).toList());
+        assertEquals(java.util.List.of("About faux-person-fx"), help);
         java.util.List<String> choices = Fx.call(() -> ((Menu) menuItem("menuAppearance")).getItems().stream()
                 .map(MenuItem::getText).toList());
         assertEquals(java.util.List.of("Light", "Dark", "System"), choices);
@@ -672,7 +723,7 @@ class MainViewTest {
 
     private static MenuItem appearanceItem(Stage window, String label) {
         MenuBar bar = (MenuBar) window.getScene().lookup("#menuBar");
-        return items(bar.getMenus().get(3)).stream()
+        return items(bar.getMenus().get(2)).stream()
                 .filter(i -> ("menuAppearance" + label).equals(i.getId())).findFirst().orElseThrow();
     }
 
@@ -709,8 +760,13 @@ class MainViewTest {
         }
     }
 
-    private void selectTab(int index) throws Exception {
-        Fx.run(() -> node("#tabs", TabPane.class).getSelectionModel().select(index));
+    /** Selects the tab for a kind, wherever it sits in the tab row. */
+    private void selectTab(Kind kind) throws Exception {
+        Fx.run(() -> {
+            TabPane tabs = node("#tabs", TabPane.class);
+            tabs.getTabs().stream().filter(t -> t.getUserData() == kind).findFirst()
+                    .ifPresent(t -> tabs.getSelectionModel().select(t));
+        });
     }
 
     private String status() throws Exception {
