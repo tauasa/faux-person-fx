@@ -6,7 +6,7 @@ that sort by any column.
 
 | | |
 |---|---|
-| Coordinates | `org.tauasa:faux-person-fx:0.3.0-SNAPSHOT`, released as jars on GitHub, not on Maven Central |
+| Coordinates | `org.tauasa:faux-person-fx:0.3.0`, released as jars on GitHub, not on Maven Central |
 | Package | `org.tauasa.faux.app` |
 | Java | 17 (`maven.compiler.release=17`) |
 | Build | Maven, with `spring-boot-starter-parent` |
