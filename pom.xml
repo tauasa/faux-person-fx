@@ -113,6 +113,33 @@
         </configuration>
       </plugin>
 
+      <!-- Ship the license and the notices inside the jar, at META-INF/LICENSE and
+           META-INF/NOTICE. A copy step, not a <resources> block, so Spring Boot's
+           resource filtering (which puts the versions into About) stays as it is. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>license-and-notice</id>
+            <phase>process-resources</phase>
+            <goals><goal>copy-resources</goal></goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/META-INF</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}</directory>
+                  <includes>
+                    <include>LICENSE</include>
+                    <include>NOTICE</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- mvn spring-boot:run, and a fat jar: java -jar target/faux-person-fx.jar -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
