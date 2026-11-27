@@ -162,4 +162,6 @@ protects.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). [NOTICE](NOTICE) lists the licenses of the
+libraries and data the jars bundle, including the GeoNames data under CC BY
+4.0. Both are also in each jar, at `META-INF/LICENSE` and `META-INF/NOTICE`.
