@@ -19,6 +19,24 @@
   <name>faux-person-fx</name>
   <description>A desktop app that generates random names, companies and people with faux-person and shows them in sortable tables.</description>
 
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/license/mit</url>
+      <distribution>repo</distribution>
+      <comments>The bundled GeoNames data is CC BY 4.0; see NOTICE.</comments>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>tauasa</id>
+      <name>Tauasa Timoteo</name>
+      <email>tui@tauasa.org</email>
+      <url>https://github.com/tauasa</url>
+    </developer>
+  </developers>
+  
   <properties>
     <java.version>17</java.version>
     <maven.compiler.release>17</maven.compiler.release>
