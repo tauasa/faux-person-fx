@@ -41,6 +41,7 @@ public final class Columns {
                 new Column<>(COMPANY_NAME, Company::name),
                 new Column<>("City", Company::city),
                 new Column<>("State", Company::state),
+                new Column<>("Country", Company::country),
                 new Column<>("Domain", Company::domain));
     }
 
@@ -71,6 +72,7 @@ public final class Columns {
                 new Column<>("Employer", p -> p.employer().name()),
                 new Column<>("Employer city", p -> p.employer().city()),
                 new Column<>("Employer state", p -> p.employer().state()),
+                new Column<>("Employer country", p -> p.employer().country()),
                 new Column<>("Employer domain", p -> p.employer().domain()));
     }
 
