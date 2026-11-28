@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
@@ -101,6 +102,8 @@ public class MainView {
     private MenuItem copy;
     private MenuItem save;
     private Path lastDirectory;
+    /** The type File > Save starts on: zipped CSV, then whatever was saved last. */
+    private ExportFormat.SaveType lastType = ExportFormat.SaveType.all().get(0);
     private MenuItem selectAll;
     private final ToggleGroup viewGroup = new ToggleGroup();
 
@@ -422,12 +425,14 @@ public class MainView {
         }
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Save " + sheet.kind.title());
-        for (ExportFormat format : ExportFormat.values()) {
-            List<String> patterns = format.extensions().stream().map(x -> "*." + x).toList();
-            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
-                    format.description() + " (" + String.join(", ", patterns) + ")", patterns));
+        List<ExportFormat.SaveType> types = ExportFormat.SaveType.all();
+        for (ExportFormat.SaveType type : types) {
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(type.description(), type.patterns()));
         }
-        chooser.setInitialFileName(sheet.kind.title().toLowerCase() + ".csv");
+        // Zipped CSV first and chosen, so a saved file comes with its data credit; after a
+        // save, the type saved. The dialog can't rename as the type changes, so this is its one chance.
+        chooser.setSelectedExtensionFilter(chooser.getExtensionFilters().get(types.indexOf(lastType)));
+        chooser.setInitialFileName(suggestedName());
         if (lastDirectory != null && Files.isDirectory(lastDirectory)) {
             chooser.setInitialDirectory(lastDirectory.toFile());
         }
@@ -436,28 +441,46 @@ public class MainView {
             return;
         }
         int filter = chooser.getExtensionFilters().indexOf(chooser.getSelectedExtensionFilter());
-        save(chosen.toPath(), filter < 0 ? ExportFormat.CSV : ExportFormat.values()[filter]);
+        save(chosen.toPath(), filter < 0 ? types.get(0) : types.get(filter));
+    }
+
+    /** The save dialog's suggested name for the selected tab, now, in the type it starts on. */
+    String suggestedName() {
+        return ExportFormat.suggestedName(selected().kind.title().toLowerCase(), LocalDateTime.now(), lastType);
+    }
+
+    /** {@link #save(Path, ExportFormat.SaveType)}, unzipped unless the name ends {@code .zip}. */
+    Path save(Path chosen, ExportFormat fallback) {
+        return save(chosen, new ExportFormat.SaveType(fallback, false));
     }
 
     /**
      * Writes the selected tab's rows, in the order shown, as UTF-8, and says
-     * so in the status bar. The file's extension picks the format; with none,
-     * {@code fallback} does, and its extension is added.
+     * so in the status bar. The file's name picks the format and whether it's
+     * zipped, as {@link ExportFormat#resolve(Path, ExportFormat.SaveType)}
+     * says; a zip holds the rows and {@link Exporter#NOTICE_NAME}.
      *
      * @return the file written, or {@code null} if writing failed
      */
-    Path save(Path chosen, ExportFormat fallback) {
+    Path save(Path chosen, ExportFormat.SaveType fallback) {
         Sheet<?> sheet = selected();
         ExportFormat.Target target = ExportFormat.resolve(chosen, fallback);
-        try (Writer out = Files.newBufferedWriter(target.file(), StandardCharsets.UTF_8)) {
-            sheet.table.export(target.format(), out);
+        try {
+            if (target.zip()) {
+                Exporter.zip(target.file(), target.entryName(), out -> sheet.table.export(target.format(), out));
+            } else {
+                try (Writer out = Files.newBufferedWriter(target.file(), StandardCharsets.UTF_8)) {
+                    sheet.table.export(target.format(), out);
+                }
+            }
         } catch (IOException e) {
             status.setText("Couldn't save " + target.file().getFileName() + ": " + e.getMessage());
             return null;
         }
         lastDirectory = target.file().toAbsolutePath().getParent();
+        lastType = new ExportFormat.SaveType(target.format(), target.zip());
         status.setText("Saved " + sheet.kind.count(sheet.table.size()) + " to " + target.file().getFileName()
-                + " as " + target.format().description());
+                + " as " + target.label());
         return target.file();
     }
 

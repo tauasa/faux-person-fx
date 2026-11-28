@@ -93,7 +93,7 @@ Cmd on macOS and Ctrl elsewhere.
 | Menu | Item | Does |
 |---|---|---|
 | File | Generate (Shortcut+G) | Same as the Generate button |
-| File | Save… (Shortcut+S) | Saves every row of the current tab, in the order shown, as CSV, pipe-delimited or JSON. See below |
+| File | Save… (Shortcut+S) | Saves every row of the current tab, in the order shown, as CSV, pipe-delimited or JSON, zipped by default. See below |
 | File | Exit | Closes the app |
 | Edit | Copy (Shortcut+C) | Copies the selected rows, with a header line, as tab-separated text that pastes into a spreadsheet as columns. In a text box, copies its text instead |
 | Edit | Select All (Shortcut+A) | Selects every row in the tab, or all the text in a text box |
@@ -108,10 +108,18 @@ can't be edited.
 
 ### Saving
 
-File > Save… asks for a file name and a type. The extension picks the
-format: `.csv`, `.psv` or `.txt` (pipe-delimited), or `.json`. A name with
-none of these is saved in the type chosen in the dialog, with its extension
-added. Files are UTF-8 with no byte-order mark.
+File > Save… asks for a file name and a type. It starts on **CSV, zipped**:
+a zip holding the file and `NOTICE.txt`, which credits the data's sources.
+Each format can be saved zipped or bare, and the next Save starts on the type
+you saved last. It suggests the tab's name and the time to the minute, with
+that type's extensions, for example `people-202611281430.csv.zip`,
+`people-202611281430.txt.zip` (pipe) or `people-202611281430.json.zip`.
+
+The name picks the format: `.csv`, `.psv` or `.txt` (pipe-delimited), or
+`.json`, and with `.zip` after it, zipped. Type `people.csv` for the bare
+file, whatever type is chosen. A name with none of these is saved in the
+chosen type, with its extensions added. Files are UTF-8 with no byte-order
+mark.
 
 | Format | What's in it |
 |---|---|

@@ -48,8 +48,8 @@ Spring owns the objects. JavaFX owns the window.
 | `SplashPreloader` | The JavaFX `Preloader`: an undecorated window with the name, a progress bar and a line saying what's happening. The bar never moves backwards. It stays up through `BEFORE_START` and closes on `Splash.Ready`, or on a startup error |
 | `Splash` | The notifications the app sends the splash: `Progress(fraction, message)` and `Ready` |
 | `StartupProgress` | A Spring `ApplicationListener` that turns Boot's startup events, from starting to ready, into steps from 0.05 to 0.6 |
-| `ExportFormat` | CSV, pipe and JSON, their extensions, and which one a file name picks |
-| `Exporter` | Writes columns and rows in a format. Plain Java, no JavaFX |
+| `ExportFormat` | CSV, pipe and JSON, their extensions, the save dialog's zipped and bare types, and which format a file name picks and whether it's zipped |
+| `Exporter` | Writes columns and rows in a format, and a zip of them with the data credit. Plain Java, no JavaFX |
 | `FauxFxApp` | The JavaFX `Application`. `init()` starts the Spring context (not headless, no web) with `StartupProgress` listening, then has `FauxService.warmUp()` make one of each kind, so faux-person reads its data files behind the splash rather than on the first Generate. `start(stage)` asks the context for `MainView` and shows it with the app's `HostServices` to open links, then sends `Splash.Ready` on the next pulse, once the window has painted. `stop()` closes the context |
 | `FauxFxApplication` | The `@SpringBootApplication` configuration class |
 | `FauxFxProperties` | `@ConfigurationProperties("faux.fx")`: `default-count` (100), `max-count` (10000) and `history-file` (`~/.faux-person-fx/seed-history.txt`; blank keeps no history on disk) |
@@ -148,10 +148,22 @@ in a text box even when the tab is empty.
 
 ### Saving
 
-The file's extension picks the format (`csv`; `psv` or `txt`; `json`, any
-case). A name without one is saved in the type chosen in the dialog, with its
-first extension added. UTF-8, no byte-order mark. The status bar says what was
-saved where, or why it couldn't be.
+The dialog offers each format zipped, then bare. It starts on CSV, zipped,
+and after a save on the type saved, since a save dialog can't rename the file
+as the type changes. It suggests `<tab>-<yyyyMMddHHmm>` and that type's
+extensions, the time local and to the minute: `people-202611281430.csv.zip`,
+`.txt.zip` for zipped pipe, `.json.zip`. A zip holds the file and `NOTICE.txt`, the repo's
+[NOTICE](NOTICE), which credits the data as GeoNames's CC BY 4.0 license asks a
+copy to; that's why zipped is the default. The build copies NOTICE next to
+`Exporter`, since faux-person's jar has its own `META-INF/NOTICE`.
+
+The file's name picks the format and whether it's zipped, any case. A name
+ending `.zip` is zipped, and the name inside it picks the format (`csv`; `psv`
+or `txt`; `json`), or the chosen type does, with its extension added
+before `.zip` (`txt` for pipe). A name ending in a format's extension is that format, bare,
+whatever type is chosen. Any other name is saved in the chosen type, with its
+extensions added. UTF-8, no byte-order mark. The status bar says what was
+saved where, and whether zipped, or why it couldn't be.
 
 | Format | Rules |
 |---|---|
@@ -245,6 +257,7 @@ run headless.
 | The versions About shows are the build's | `application.properties` isn't filtered |
 | CSV and pipe quote exactly what RFC 4180 says, with their line ends; JSON parses back to the same values, with every column, Age a number and dates ISO | A saved file reads back wrong |
 | The extension picks the format, and a name without one gets the chosen type's | A file is saved in the wrong format or name |
+| A `.zip` name is zipped and the name inside picks the format; zipped CSV is the dialog's first type; the suggested name is the tab, the minute and the type's extensions, and the next save starts on the type saved; a zip holds the same bytes as the bare file, then the repo's NOTICE, and nothing else | A zip loses the data credit, or holds the wrong rows |
 | Save from the window writes the selected tab in the shown order, and a failed save says so | Save writes the wrong rows, or fails silently |
 | Select All selects every row; Copy puts them on the clipboard; in a focused text box both act on its text, and Copy is enabled there | Edit acts on the wrong thing |
 | The splash shows progress, never moves backwards, stays up through `BEFORE_START`, and closes on `Ready` or an error | The splash hangs, or the window flashes in before it closes |
