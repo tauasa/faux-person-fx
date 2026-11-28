@@ -1,7 +1,16 @@
 package org.tauasa.faux.app;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import java.time.temporal.TemporalAccessor;
 import java.util.List;
 import java.util.Locale;
@@ -22,7 +31,52 @@ import java.util.Locale;
  */
 public final class Exporter {
 
+    /** The name of the data credit in every zip. */
+    public static final String NOTICE_NAME = "NOTICE.txt";
+
+    /**
+     * The repo's NOTICE, which the build copies next to this class. GeoNames
+     * is CC BY 4.0, which asks that a copy of its data carry the credit. Not
+     * META-INF/NOTICE: faux-person's jar has one there too.
+     */
+    static final byte[] NOTICE = notice();
+
+    /** Writes a file's text. */
+    @FunctionalInterface
+    public interface Body {
+        void write(Writer out) throws IOException;
+    }
+
     private Exporter() {
+    }
+
+    private static byte[] notice() {
+        try (InputStream in = Exporter.class.getResourceAsStream("NOTICE")) {
+            if (in == null) {
+                throw new IllegalStateException("NOTICE is missing from the classpath; the build copies it");
+            }
+            return in.readAllBytes();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Writes a zip holding {@code entryName}, the UTF-8 text {@code body}
+     * writes, and then {@link #NOTICE_NAME}.
+     */
+    public static void zip(Path file, String entryName, Body body) throws IOException {
+        try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(file), StandardCharsets.UTF_8)) {
+            zip.putNextEntry(new ZipEntry(entryName));
+            // Not closed: closing it would close the zip before the credit goes in.
+            Writer out = new BufferedWriter(new OutputStreamWriter(zip, StandardCharsets.UTF_8));
+            body.write(out);
+            out.flush();
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry(NOTICE_NAME));
+            zip.write(NOTICE);
+            zip.closeEntry();
+        }
     }
 
     public static <T> void write(List<Column<T>> columns, List<T> rows, ExportFormat format, Writer out)

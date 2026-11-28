@@ -625,6 +625,49 @@ class MainViewTest {
     }
 
     @Test
+    void aZippedSaveHoldsTheSameFileAndTheDataCredit(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir)
+            throws Exception {
+        generate("30", "6");
+        java.nio.file.Path bare = Fx.call(() -> view.save(dir.resolve("names.csv"), ExportFormat.CSV));
+        java.nio.file.Path zipped = Fx.call(() -> view.save(dir.resolve("names"),
+                new ExportFormat.SaveType(ExportFormat.CSV, true)));
+        assertEquals(dir.resolve("names.csv.zip"), zipped);
+        assertTrue(status().startsWith("Saved 30 names to names.csv.zip as CSV, zipped"), status());
+
+        try (java.util.zip.ZipInputStream zip = new java.util.zip.ZipInputStream(
+                java.nio.file.Files.newInputStream(zipped))) {
+            assertEquals("names.csv", zip.getNextEntry().getName());
+            org.junit.jupiter.api.Assertions.assertArrayEquals(java.nio.file.Files.readAllBytes(bare),
+                    zip.readAllBytes(), "the same bytes as the bare file");
+            assertEquals(Exporter.NOTICE_NAME, zip.getNextEntry().getName());
+            org.junit.jupiter.api.Assertions.assertArrayEquals(
+                    java.nio.file.Files.readAllBytes(java.nio.file.Path.of("NOTICE")), zip.readAllBytes(),
+                    "the repo's NOTICE");
+            assertEquals(null, zip.getNextEntry(), "the file and the credit, nothing else");
+        }
+        String notice = new String(Exporter.NOTICE, java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue(notice.contains("GeoNames") && notice.contains("one postal code per street"), notice);
+    }
+
+    @Test
+    void theSaveDialogSuggestsTheTabNowAndTheLastTypeSaved(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir)
+            throws Exception {
+        generate("3", "6");
+        String before = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmm")
+                .format(java.time.LocalDateTime.now());
+        String first = Fx.call(() -> view.suggestedName());
+        String after = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmm")
+                .format(java.time.LocalDateTime.now());
+        assertTrue(first.equals("names-" + before + ".csv.zip") || first.equals("names-" + after + ".csv.zip"),
+                "the tab, this minute, zipped CSV: " + first);
+
+        Fx.call(() -> view.save(dir.resolve("names"), new ExportFormat.SaveType(ExportFormat.PIPE, true)));
+        assertTrue(Fx.call(() -> view.suggestedName()).endsWith(".txt.zip"), "starts on the type saved last");
+        Fx.call(() -> view.save(dir.resolve("names.json"), ExportFormat.CSV));
+        assertTrue(Fx.call(() -> view.suggestedName()).matches("names-\\d{12}\\.json"), "bare JSON, as the name chose");
+    }
+
+    @Test
     void aSaveThatFailsSaysSo(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) throws Exception {
         generate("3", "6");
         java.nio.file.Path missing = dir.resolve("no-such-folder").resolve("names.csv");

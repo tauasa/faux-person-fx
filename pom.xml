@@ -137,6 +137,24 @@
               </resources>
             </configuration>
           </execution>
+          <!-- NOTICE again, next to Exporter, which puts it in every zip it saves as NOTICE.txt.
+               META-INF/NOTICE won't do: faux-person's jar has one there too. -->
+          <execution>
+            <id>notice-for-zips</id>
+            <phase>process-resources</phase>
+            <goals><goal>copy-resources</goal></goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/org/tauasa/faux/app</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}</directory>
+                  <includes>
+                    <include>NOTICE</include>
+                  </includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
 
