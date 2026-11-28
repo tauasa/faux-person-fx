@@ -46,6 +46,7 @@ class AboutDialogTest {
         String data = Fx.call(() -> ((Label) dialog.getDialogPane().lookup("#aboutData")).getText());
         assertTrue(data.contains("GeoNames") && data.contains("Creative Commons Attribution 4.0"), "GeoNames needs attribution: " + data);
         assertTrue(data.contains("sampled per state"), "CC BY asks that changes be noted: " + data);
+        assertTrue(data.contains("one postal code per street"), "CC BY asks that changes be noted: " + data);
 
         String builtWith = Fx.call(() -> ((Label) dialog.getDialogPane().lookup("#aboutBuiltWith")).getText());
         assertTrue(builtWith.contains("faux-person 0.2.0 (MIT License)"), builtWith);

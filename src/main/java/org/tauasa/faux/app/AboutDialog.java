@@ -62,7 +62,8 @@ final class AboutDialog {
         Label data = wrapped("Name, company and place data comes from faux-person, which built it from "
                 + "Wikidata (CC0 1.0); GeoNames (geonames.org), under the Creative Commons Attribution 4.0 "
                 + "License (creativecommons.org/licenses/by/4.0), with places sampled per state, joined to "
-                + "postal codes and reduced to name, state and one ZIP code; and US Census Bureau TIGER/Line "
+                + "postal codes and reduced to name, state and one ZIP code, and outside the US reduced to a "
+                + "place name and one postal code per street; and US Census Bureau TIGER/Line "
                 + "Shapefiles 2024, a work of the US Government not subject to copyright in the United States.");
         data.setId("aboutData");
 
