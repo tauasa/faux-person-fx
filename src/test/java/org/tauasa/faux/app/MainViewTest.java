@@ -514,7 +514,7 @@ class MainViewTest {
         try {
             assertEquals("Company: " + second.name(), Fx.call(dialog::getTitle));
             assertEquals(second.domain(), field(dialog, "domain").getText());
-            assertEquals(second.city(), field(dialog, "city").getText());
+            assertEquals(second.address().city(), field(dialog, "city").getText());
         } finally {
             Fx.run(dialog::close);
         }

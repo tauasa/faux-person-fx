@@ -39,9 +39,9 @@ public final class Columns {
     public static List<Column<Company>> companies() {
         return List.of(
                 new Column<>(COMPANY_NAME, Company::name),
-                new Column<>("City", Company::city),
-                new Column<>("State", Company::state),
-                new Column<>("Country", Company::country),
+                new Column<>("City", (Company c) -> c.address().city()),
+                new Column<>("State", (Company c) -> c.address().state()),
+                new Column<>("Country", (Company c) -> c.address().country()),
                 new Column<>("Domain", Company::domain));
     }
 
@@ -70,9 +70,9 @@ public final class Columns {
                 new Column<>("Postal code", p -> p.address().postalCode()),
                 new Column<>("Country", p -> p.address().country()),
                 new Column<>("Employer", p -> p.employer().name()),
-                new Column<>("Employer city", p -> p.employer().city()),
-                new Column<>("Employer state", p -> p.employer().state()),
-                new Column<>("Employer country", p -> p.employer().country()),
+                new Column<>("Employer city", p -> p.employer().address().city()),
+                new Column<>("Employer state", p -> p.employer().address().state()),
+                new Column<>("Employer country", p -> p.employer().address().country()),
                 new Column<>("Employer domain", p -> p.employer().domain()));
     }
 
