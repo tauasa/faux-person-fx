@@ -43,9 +43,9 @@ class ColumnsTest {
         m.put("Postal code", text(p -> p.address().postalCode()));
         m.put("Country", text(p -> p.address().country()));
         m.put("Employer", text(p -> p.employer().name()));
-        m.put("Employer city", text(p -> p.employer().city()));
-        m.put("Employer state", text(p -> p.employer().state()));
-        m.put("Employer country", text(p -> p.employer().country()));
+        m.put("Employer city", text(p -> p.employer().address().city()));
+        m.put("Employer state", text(p -> p.employer().address().state()));
+        m.put("Employer country", text(p -> p.employer().address().country()));
         m.put("Employer domain", text(p -> p.employer().domain()));
         return m;
     }
@@ -53,9 +53,9 @@ class ColumnsTest {
     private static Map<String, Comparator<Company>> companyOrders() {
         Map<String, Comparator<Company>> m = new LinkedHashMap<>();
         m.put("Name", text(Company::name));
-        m.put("City", text(Company::city));
-        m.put("State", text(Company::state));
-        m.put("Country", text(Company::country));
+        m.put("City", text((Company c) -> c.address().city()));
+        m.put("State", text((Company c) -> c.address().state()));
+        m.put("Country", text((Company c) -> c.address().country()));
         m.put("Domain", text(Company::domain));
         return m;
     }
@@ -119,13 +119,14 @@ class ColumnsTest {
                 Map.entry("address.postalCode", "Postal code"),
                 Map.entry("address.country", "Country"),
                 Map.entry("employer.name", "Employer"),
-                Map.entry("employer.city", "Employer city"),
-                Map.entry("employer.state", "Employer state"),
-                Map.entry("employer.country", "Employer country"),
+                Map.entry("employer.address.city", "Employer city"),
+                Map.entry("employer.address.state", "Employer state"),
+                Map.entry("employer.address.country", "Employer country"),
                 Map.entry("employer.domain", "Employer domain"));
         Person p = service.people(request).rows().get(0);
         Map<String, Object> fields = new LinkedHashMap<>();
         flatten("", p, fields);
+        assertHeadquartersHaveNoStreetOrPostalCode(fields, "employer.address.");
         assertEquals(titleOf.keySet(), fields.keySet(), "a Person field has no column mapping");
 
         List<Column<Person>> columns = Columns.people(TODAY);
@@ -142,13 +143,26 @@ class ColumnsTest {
         }
     }
 
+    /**
+     * faux-person 0.5.0 gives a company's headquarters only a city, state and
+     * country: its street and postal code are always empty, so they get no
+     * column. This drops them from the fields to map, and fails if faux-person
+     * starts filling them, when they'd need columns.
+     */
+    private static void assertHeadquartersHaveNoStreetOrPostalCode(Map<String, Object> fields, String prefix) {
+        for (String unused : List.of("street", "postalCode")) {
+            assertEquals("", fields.remove(prefix + unused), prefix + unused + " now has a value: give it a column");
+        }
+    }
+
     @Test
     void everyCompanyFieldHasItsOwnColumn() throws Exception {
-        Map<String, String> titleOf = Map.of("name", "Name", "city", "City", "state", "State", "country", "Country",
-                "domain", "Domain");
+        Map<String, String> titleOf = Map.of("name", "Name", "address.city", "City", "address.state", "State",
+                "address.country", "Country", "domain", "Domain");
         Company c = service.companies(request).rows().get(0);
         Map<String, Object> fields = new LinkedHashMap<>();
         flatten("", c, fields);
+        assertHeadquartersHaveNoStreetOrPostalCode(fields, "address.");
         assertEquals(titleOf.keySet(), fields.keySet(), "a Company field has no column mapping");
         for (Map.Entry<String, Object> field : fields.entrySet()) {
             assertEquals(field.getValue(), column(Columns.companies(), titleOf.get(field.getKey())).valueOf(c));

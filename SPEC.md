@@ -10,7 +10,7 @@ that sort by any column.
 | Package | `org.tauasa.faux.app` |
 | Java | 17 (`maven.compiler.release=17`) |
 | Build | Maven, with `spring-boot-starter-parent` |
-| Dependencies | `org.tauasa:faux-person:0.4.0`, Spring Boot 4.2 (core only, no web server), JavaFX 21 LTS (`javafx-controls`). Spring Boot's test starter at test scope |
+| Dependencies | `org.tauasa:faux-person:0.5.0`, Spring Boot 4.2 (core only, no web server), JavaFX 21 LTS (`javafx-controls`). Spring Boot's test starter at test scope |
 | Status | Draft, 2026-11-21 |
 
 ## Goals
@@ -207,7 +207,12 @@ Hebrew, Arabic and Persian for those regions' names that Wikidata spells in
 them; blank otherwise. Country (a company's, or a person's employer's) is the
 headquarters' ISO 3166-1 code; State is blank outside the US. faux-person 0.4.0
 adds 4,000 international companies, and a person works for one in their
-region's countries. These reach the copy, the saved files (`nativeName`,
+region's countries. From faux-person 0.5.0 a person also lives in their
+employer's country, so Country is no longer always `US`; outside the US a
+person's State is blank, and so are Postal code where GeoNames has none near
+the street, and Street in countries with too few streets in Wikidata, such as
+South Korea. A company's headquarters has no street or postal code in
+faux-person, so the Companies tab has no columns for them. These reach the copy, the saved files (`nativeName`,
 `country` and `employerCountry` in JSON) and the record dialog, like any column.
 
 Date of birth sorts as a date and Age as a number, not as text. Gender and
